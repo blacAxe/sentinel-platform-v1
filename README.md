@@ -119,33 +119,19 @@ This improved platform resiliency and orchestration reliability.
 
 ## Distributed Services Running
 
-ADD IMAGE HERE
 
-```md
 ![Docker Services](docs/images/docker-services.png)
-```
+
 
 ---
 
 ## Security Event Detection
 
-ADD IMAGE HERE
-
-```md
 ![Pipeline Demo](docs/images/pipeline-demo.png)
-```
-
----
 
 ## ClickHouse Event Persistence
 
-ADD IMAGE HERE
-
-```md
 ![ClickHouse Events](docs/images/clickhouse-events.png)
-```
-
----
 
 # Running the Platform
 
