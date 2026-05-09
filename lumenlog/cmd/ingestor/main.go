@@ -35,8 +35,16 @@ func main() {
 		log.Fatalf("ClickHouse connection failed: %v", err)
 	}
 
-	if err := conn.Ping(ctx); err != nil {
-		log.Fatalf("ClickHouse not reachable: %v", err)
+	for {
+		err = conn.Ping(ctx)
+
+		if err == nil {
+			fmt.Println("Connected to ClickHouse!")
+			break
+		}
+
+		fmt.Println("Waiting for ClickHouse...")
+		time.Sleep(2 * time.Second)
 	}
 
 	// Setup Kafka Producer
@@ -57,6 +65,21 @@ func main() {
 	}
 
 	c.SubscribeTopics([]string{"security-events"}, nil)
+
+	topic := "security-events"
+
+	for {
+		md, err := c.GetMetadata(&topic, false, 5000)
+		if err == nil {
+			if _, exists := md.Topics[topic]; exists {
+				fmt.Println("Kafka topic ready!")
+				break
+			}
+		}
+
+		fmt.Println("Waiting for Kafka topic security-events...")
+		time.Sleep(2 * time.Second)
+	}
 
 	fmt.Println("Lumen Ingestor Live! Processing logs...")
 

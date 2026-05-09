@@ -1,8 +1,11 @@
 # Environment files
 .env
-.env.*
 **/.env
-**/.env.*
+
+# Secrets
+token.txt
+*.pem
+*.key
 
 # Binaries
 *.exe
@@ -32,5 +35,5 @@ coverage.out
 tmp/
 dist/
 
-# Secrets
-token.txt
+# Docker
+*.pid

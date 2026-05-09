@@ -34,7 +34,7 @@ func SendEvent(event SecurityEvent) {
 	}
 
 	resp, err := client.Post(
-		"http://host.docker.internal:7777/event",
+		"http://agent:7777/event",
 		"application/json",
 		bytes.NewBuffer(jsonData),
 	)

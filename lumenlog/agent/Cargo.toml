@@ -8,15 +8,13 @@ name = "lumen-agent"
 path = "src/main.rs"
 
 [dependencies]
-# Using = means "Only this version, do not look for newer ones"
-tokio = { version = "=1.32.0", features = ["full"] }
-prost = "=0.12.0"
-rdkafka = { version = "=0.31.0", features = ["cmake-build"] }
-chrono = "=0.4.31"
-
+tokio = { version = "1", features = ["full"] }
+warp = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-warp = "0.3"
+chrono = "0.4"
+prost = "0.13"
+rdkafka = { version = "0.38", features = ["cmake-build"] }
 
 [build-dependencies]
 prost-build = "=0.12.0"

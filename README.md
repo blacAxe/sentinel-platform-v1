@@ -1,318 +1,162 @@
-# Sentinel Platform v0
+# Sentinel Platform v1
 
-![CI](https://github.com/blacAxe/sentinel-platform/actions/workflows/integration.yml/badge.svg)
+Distributed security observability pipeline built with Go, Rust, Kafka-compatible streaming, ClickHouse, and Docker.
 
-## Category
+Sentinel Platform is a real-time event-driven system designed to simulate how modern security infrastructure detects, processes, transports, and stores security telemetry across distributed services.
 
-Security Engineering / Distributed Systems
-
----
-
-# Overview
-
-Sentinel Platform v0 is a zero-trust security platform built around identity enforcement, request validation, and edge-layer protection.
-
-The system separates authentication from enforcement by using an independent Identity Provider and a dedicated security proxy. Every request is validated before reaching protected services.
-
-This version focuses on:
-
-* passkey-based authentication
-* JWT identity propagation
-* reverse proxy enforcement
-* Web Application Firewall (WAF) protections
-* rate limiting
-* structured security telemetry
-* integration with the LumenLog event pipeline
-
-The project demonstrates how authentication, authorization, and request security can operate together in a production-style architecture.
+The platform demonstrates cross-language backend engineering, asynchronous event pipelines, distributed systems orchestration, and security-focused architecture.
 
 ---
 
-# Core Idea
+# Architecture Overview
 
-Every request must prove its identity before it is trusted.
+The system is composed of multiple independent services communicating through Kafka-compatible event streaming using Redpanda.
 
-Sentinel Platform follows a zero-trust model where:
+## Core Services
 
-* identity is verified independently
-* authorization is enforced at the edge
-* requests are inspected before forwarding
-* malicious traffic is blocked early
-* security events are emitted as structured telemetry
-
-Rather than treating authentication and security as isolated features, the platform combines them into a connected request enforcement pipeline.
-
----
-
-# System Architecture
-
-```mermaid
-flowchart LR
-
-    User["User / Client"]
-
-    subgraph IdentityLayer
-        IdP["Zero Trust Identity Provider"]
-        DB[(PostgreSQL)]
-    end
-
-    subgraph EnforcementLayer
-        Proxy["Sentinel Proxy"]
-    end
-
-    subgraph Observability
-        Lumen["LumenLog Pipeline"]
-    end
-
-    subgraph Backend
-        App["Protected Service"]
-    end
-
-    User -->|Register / Login| IdP
-    IdP --> DB
-    IdP -->|JWT| User
-
-    User -->|Authenticated Request| Proxy
-
-    Proxy -->|Allow| App
-    Proxy -->|Security Events| Lumen
-```
+| Service | Language | Purpose |
+|---|---|---|
+| Sentinel Proxy | Go | Reverse proxy + WAF security layer |
+| Lumen Agent | Rust | Security event collector and Kafka producer |
+| Lumen Ingestor | Go | Kafka consumer + ClickHouse ingestion pipeline |
+| Lumen Alerter | Go | Real-time security event monitoring |
+| IDP Service | Go | Identity/authentication simulation service |
+| Redpanda | Kafka API | Event streaming backbone |
+| ClickHouse | Database | High-performance analytics storage |
+| PostgreSQL | Database | Identity provider persistence |
 
 ---
 
-# Architecture Components
-
-## Zero Trust Identity Provider
-
-Authentication service responsible for identity creation and session management.
-
-Responsibilities:
-
-* WebAuthn passkey registration
-* passwordless authentication
-* JWT access token issuance
-* refresh token lifecycle management
-* session persistence in PostgreSQL
-
----
-
-## Sentinel Proxy
-
-Security enforcement gateway positioned in front of protected services.
-
-Responsibilities:
-
-* reverse proxy routing
-* JWT validation
-* role-based access control
-* request inspection
-* WAF filtering
-* rate limiting
-* structured security event generation
-
-The proxy acts as the primary enforcement layer of the system.
-
----
-
-## LumenLog Integration
-
-Sentinel Platform emits structured telemetry events into LumenLog.
-
-Events include:
-
-* blocked attacks
-* authentication activity
-* rate-limit violations
-* unauthorized access attempts
-* request metadata
-
-This creates real-time observability for security events across the platform.
-
----
-
-# Request Flow
-
-1. User authenticates through the Identity Provider
-2. Identity Provider issues JWT access token
-3. Client sends request through Sentinel Proxy
-4. Proxy validates identity and permissions
-5. WAF and rate-limiter inspect the request
-6. Request is either:
-   * forwarded to backend
-   * blocked at the edge
-7. Structured telemetry event emitted to LumenLog
-
----
-
-# Core Features
-
-## Passkey Authentication
-
-* passwordless WebAuthn login
-* phishing-resistant authentication
-* hardware-backed credentials
-* browser-native passkey support
-
----
-
-## JWT-Based Identity
-
-* stateless access verification
-* short-lived access tokens
-* role propagation through JWT claims
-* proxy-side identity enforcement
-
----
-
-## Refresh Token Lifecycle
-
-* refresh tokens persisted in PostgreSQL
-* hashed before storage
-* renewable sessions without re-authentication
-* server-side session invalidation support
-
----
-
-## Web Application Firewall (WAF)
-
-Detects and blocks suspicious request patterns.
-
-Current protections include:
-
-* SQL injection detection
-* XSS pattern detection
-* malicious query inspection
-* suspicious payload filtering
-
-Requests are blocked before reaching backend services.
-
----
-
-## Rate Limiting
-
-* per-IP request limiting
-* brute-force protection
-* automated abuse reduction
-* edge-layer traffic enforcement
-
----
-
-## Role-Based Access Control
-
-Routes are protected directly at the proxy layer.
-
-Examples:
-
-* admin-only endpoints
-* user-restricted APIs
-* token-based route authorization
-
-Unauthorized traffic is rejected before backend access.
-
----
-
-## Structured Security Telemetry
-
-Security events are emitted for:
-
-* blocked requests
-* successful authentication
-* failed authorization
-* attack detection
-* rate-limit violations
-
-Telemetry is forwarded into the LumenLog pipeline for storage and alerting.
-
----
-
-# Example Security Event
+# Event Flow
 
 ```text
-🚨 SECURITY ALERT
-
-User: bob
-Service: sentinel-proxy
-Attack: SQL Injection
-Action: blocked
-Path: /login
-IP: 192.168.x.x
+Incoming Request
+        ↓
+Sentinel Proxy (WAF Detection)
+        ↓
+Rust Security Agent
+        ↓
+Redpanda / Kafka Event Bus
+        ↓
+Go Ingestor Service
+        ↓
+ClickHouse Analytics Storage
+        ↓
+Real-Time Alerting Service
 ```
 
 ---
 
-# Example Flows
+# Features
 
-## Allowed Request
+- Real-time security event ingestion
+- Event-driven distributed architecture
+- Kafka-compatible streaming with Redpanda
+- ClickHouse analytics persistence
+- Dockerized multi-service deployment
+- WAF-style attack detection
+- Protobuf-based event serialization
+- Cross-language service communication
+- Graceful startup orchestration handling
+- Real-time alert monitoring
 
-```bash
-curl -H "Authorization: Bearer <token>" http://localhost:8081/api/user
-```
+---
 
-Result:
+# Technologies Used
 
-```text
-200 OK
+## Backend
+- Go
+- Rust
+
+## Infrastructure
+- Docker
+- Docker Compose
+- Redpanda
+- Kafka Protocol
+- ClickHouse
+- PostgreSQL
+
+## Data & Messaging
+- Protocol Buffers
+- Kafka Event Streaming
+
+---
+
+# Security Events
+
+The platform simulates real-time security telemetry flowing through a distributed event-driven pipeline.
+
+Current simulated detections include:
+
+- SQL Injection Detection
+- Request Blocking
+- Security Alert Generation
+- Event Streaming
+- Real-Time Monitoring
+- Persistent Analytics Storage
+
+## Live Security Event Detection
+
+![Security Event](docs/images/security-event.png)
+
+The Rust security agent detects attack activity and publishes structured events into the Kafka-compatible streaming pipeline, where they are consumed by downstream monitoring and analytics services.
+
+---
+
+# Engineering Challenges
+
+One issue encountered during development was distributed service startup ordering inside Docker Compose.
+
+The ingestion service occasionally initialized before Kafka topics were fully created, causing temporary consumer failures during startup.
+
+This was resolved by implementing Kafka topic readiness checks and retry logic inside the ingestion service, allowing the platform to self-recover automatically without requiring manual container restarts.
+
+This improved platform resiliency and orchestration reliability.
+
+---
+
+# Screenshots
+
+## Distributed Services Running
+
+ADD IMAGE HERE
+
+```md
+![Docker Services](docs/images/docker-services.png)
 ```
 
 ---
 
-## Unauthorized Admin Access
+## Security Event Detection
 
-```bash
-curl -H "Authorization: Bearer <user_token>" http://localhost:8081/api/admin
-```
+ADD IMAGE HERE
 
-Result:
-
-```text
-403 Forbidden
+```md
+![Pipeline Demo](docs/images/pipeline-demo.png)
 ```
 
 ---
 
-## Malicious Request
+## ClickHouse Event Persistence
 
-```bash
-curl "http://localhost:8081/?q=' OR 1=1 --"
+ADD IMAGE HERE
+
+```md
+![ClickHouse Events](docs/images/clickhouse-events.png)
 ```
-
-Result:
-
-```text
-Blocked by WAF
-```
-
----
-
-# Project Structure
-
-## Identity Provider
-
-* `/handlers` → authentication and token flows
-* `/db` → PostgreSQL integration
-* `/static` → login and testing frontend
-
----
-
-## Sentinel Proxy
-
-* `/proxy` → reverse proxy routing
-* `/middleware` → WAF and rate limiting
-* `/events` → security telemetry emission
-* `/config` → environment configuration
 
 ---
 
 # Running the Platform
 
-## Prerequisites
+## Clone Repository
 
-* Docker
-* Docker Compose
+```bash
+git clone <repo-url>
+cd sentinel-platform-v1
+```
 
----
-
-## Start the System
+## Start Services
 
 ```bash
 docker compose up --build
@@ -320,101 +164,94 @@ docker compose up --build
 
 ---
 
-## Stop the System
+# Testing Security Events
 
-```bash
-docker compose down
+Send a simulated attack event:
+
+## PowerShell
+
+```powershell
+Invoke-RestMethod -Method POST `
+  -Uri "http://localhost:7777/event" `
+  -ContentType "application/json" `
+  -Body '{"user_id":"omar","attack_type":"sql_injection","action":"blocked"}'
 ```
 
 ---
 
-## Fresh Reset
+# Example Output
 
-```bash
-docker compose down -v
-```
-
----
-
-# Services
-
-| Service | Port |
-|---|---|
-| Identity Provider | 8080 |
-| Sentinel Proxy | 8081 |
-| PostgreSQL | 5432 |
-
----
-
-# Quick Test
-
-## Open Browser
+## Agent
 
 ```text
-http://localhost:8080
+🚨 SECURITY EVENT: user=omar attack=sql_injection
+Event shipped to Kafka
 ```
 
-Register a passkey and authenticate.
+## Ingestor
 
----
-
-## Test Proxy
-
-```bash
-curl http://localhost:8081
+```text
+Connected to ClickHouse!
+Kafka topic ready!
+Lumen Ingestor Live! Processing logs...
 ```
 
----
+## Alerter
 
-## Test SQL Injection Detection
-
-```bash
-curl "http://localhost:8081/?q=' OR 1=1 --"
+```text
+Security Event Detected for User: omar
 ```
 
 ---
 
-## Test XSS Detection
+# ClickHouse Verification
 
-```bash
-curl "http://localhost:8081/?q=<script>alert(1)</script>"
+```sql
+USE lumen_db;
+
+SELECT * FROM logs;
+```
+
+Example stored event:
+
+```text
+service_name : sentinel-proxy
+host         : waf-node
+level        : SECURITY
+message      : sql_injection attack blocked for user omar
+user_id      : omar
 ```
 
 ---
 
-# Tech Stack
+# Project Goals
 
-* Go
-* WebAuthn
-* JWT
-* PostgreSQL
-* Docker
-* Reverse Proxy (net/http)
-* Protobuf
-* Redpanda
-* ClickHouse
+This project was built to explore:
 
----
-
-# What This Project Demonstrates
-
-This project demonstrates:
-
-* zero-trust architecture
-* edge-layer request enforcement
-* custom reverse proxy security design
-* passkey authentication systems
-* JWT identity propagation
-* WAF implementation
-* rate-limiting systems
-* distributed telemetry pipelines
-* event-driven security observability
-* containerized distributed services
+- Distributed systems engineering
+- Event-driven architectures
+- Security observability pipelines
+- Cross-language backend systems
+- Real-time streaming infrastructure
+- High-performance analytics storage
+- Container orchestration
 
 ---
 
-# Closing Note
+# Future Improvements
 
-Sentinel Platform v0 is an experimental zero-trust enforcement platform focused on identity-aware request security and telemetry generation.
+- Dashboard UI
+- Metrics aggregation
+- Threat scoring
+- Rate limiting engine
+- Multi-node Kafka deployment
+- Authentication middleware
+- Kubernetes deployment
+- SIEM integrations
+- OpenTelemetry support
 
-The project explores how authentication, edge protection, and observability can work together as one connected security system.
+---
+
+# Status
+
+Sentinel Platform v1 is fully operational and demonstrates an end-to-end distributed security event pipeline with persistent analytics storage and real-time monitoring.
